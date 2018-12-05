@@ -1,0 +1,26 @@
+negative log p를 maximize → p-value를 minimize 
+
+<생존 분석>
+- t_0 : Follow가 시작되는 시간
+- event : 관측하고자 하는 특별한 이벤트. 
+ex) 교통사고가 일어남. 여자 친구가 생김.
+
+- (Right) censored data : follow up에 실패한 데이터 혹은, 원하는 event가 아직 일어나지 않은 데이터
+ex) https://blog.minitab.com/blog/michelle-paret/the-difference-between-right-left-and-interval-censored-data
+ex 2) 우리가 관측하려는 event가 환자의 사망이라면, 실험이 끝날 때 까지 '사망' 이라는 event가 일어나지 않은 환자는 censored 됨.
+
+- x축 : survival time, y축 : vital status
+vital status가 1이면, survival time 만에 죽어버렸다는 것.
+0이면, follow up에 실패해서 죽었는지 알 수 없다. (기본적으로 살았다고 보는 것)
+
+
+Midterm에서는 class로 환자들을 분류해서 censored data도 합쳐서 두 그룹 간 T-test를 돌렸지만,
+엄밀하게는 censored data는 실제로 죽었는지 알 수 없으므로 그냥 퉁쳐서 포함하면 안됨.
+이를 고려한 방법이 survival analysis고, non-parametric 방식이 Kaplan-Meier 방식 
+(생존 데이터를 시간에 따라 표시할 수 있는데, censored data의 경우 표시는 하되, survival probability에 영향을 주지 않게 함)
+
+두 그룹의 생존 시간이 차이가 나는지 보고 싶은데, 함수를 모르니까 non-parametric인 log rank test 돌림
+log rank test 값 큼 → 두 커브 불일치
+'' 작음 → 두 커브 유사/일치
+
+survfit 함수 → 바로 log rank test 값 뽑아줌
