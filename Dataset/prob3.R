@@ -7,16 +7,18 @@ surv_ind <- clin$survival_index
 genes <- genes[order(genes[,2]),]
 mutat <- mutat[order(mutat[,2]),]
 
-surv_ind <- clin$survival_index
 gex <- na.omit(gex)
 common_id <- intersect(intersect(clin$sample_id, mut$sample_id), colnames(gex)) # reduce data
 gex <- gex[, match( common_id,colnames(gex))]
 
 set.seed(2)
 pca_gex <- prcomp(t(gex), scale = T) # pca 
-pve <- 100*pca_gex$sdev^2/sum(pca_gex$sdev^2)
 
+km.out <- kmeans(pca_gex$x, 4, nstart = 20)
 
+# visualization silhouetter and etc. measure for optimal number of clusters
+fviz_nbclust(pca_gex$x, kmeans, method = "silhouette") 
+fviz_nbclust(pca_gex$x, kmeans, method = "wss")
 # ---------- Hierarchial Clustering ----------
 
 library(factoextra) 
