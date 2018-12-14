@@ -76,11 +76,11 @@ getSigmoidGene <- function(surv, gex, a) {
 }
 
 sig.g.1st <- getSigmoidGene(surv, gex, 5)
-write.csv(sig.g.1st, file = "sigmoid_1_a10.csv", row.names = T)
+write.csv(sig.g.1st, file = "sigmoid_1_a5.csv", row.names = T)
 
 # # Plot gexp. - legit 
 # 
-# a = 10 # moving average (smoothing) width
+# a = 5 # moving average (smoothing) width
 # r <- c()
 # rs <-c() #save correlation coeffiecient
 # ps <-c() #save p-value of correlation test
@@ -160,7 +160,8 @@ getMSEGene <- function(surv, gex, idx) {
   return(data)
 }
 
-MSE.g.1st <- plotMSE(surv, gex, data.1st$number[1:15])
+MSE.g.1st <- getMSEGene(surv, gex, data.1st$number[1:15])
+write.csv(MSE.g.1st, "MSE_gene_1.csv", )
 
 
 
@@ -178,7 +179,7 @@ getMSEMut <- function(surv, gene) {
     mutX <- setdiff(with_mut_id, mutO) # id of samples without i th gene mutation
     group1 <- na.omit(surv[match(mutO, common_pool)])
     group2 <- na.omit(surv[match(mutX, common_pool)])
-    MSE <- c(MSE, (sum((group1-mean(group1))^2)/length(group1)+sum((group2-mean(group2))^2)/length(group2))/2)
+    MSE <- c(MSE, (sum((group1-mean(group1))^2)+sum((group2-mean(group2))^2))/(length(group1)+length(group2)))
     O <- c(O, length(mutO))
     X <- c(X, length(mutX))
   }
@@ -192,3 +193,14 @@ getMSEMut <- function(surv, gene) {
 
 MSE.m.1st <- getMSEMut(surv, unique_mut_gene)
 MSE.m.1st.filter <- MSE.m.1st[MSE.m.1st$mutO>=20,]
+
+par(mfrow = c(3, 5))
+for(i in 1:15) {
+  mutO <- with_mut_id[mut_hugo == rownames(MSE.m.1st.filter)[i]]
+  mutX <- setdiff(with_mut_id, mutO) 
+  group1 <- na.omit(surv[match(mutO, common_pool)])
+  group2 <- na.omit(surv[match(mutX, common_pool)])
+  MSE <- (sum((group1-mean(group1))^2)+sum((group2-mean(group2))^2))/(length(group1)+length(group2))
+  data <- data.frame(surv = c(group1, group2), group = c(rep("mutO", length(group1)), rep("mutX", length(group2))))
+  boxplot(surv ~ group, data = data, main = paste0(rownames(MSE.m.1st.filter)[i], "(", length(mutO), ", ", round(MSE, 0), ")"))  
+}
