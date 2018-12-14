@@ -53,7 +53,6 @@ data.test <- data[-train,]
 ## Cross-validation (K-folds)
 # load the library
 library(caret)
-library(adabag)
 
 error_rate <- c()
 
@@ -65,51 +64,31 @@ interaction.dept.control = 4 # Default : 1
 K <- 5 # Number of folds of the cross-validation
 folds <- createFolds(1:nrow(data.train), K) # Requires 'caret' package; Creates K-folds for testing (Using rest of the data for training)
 for(i in 1:K){
-   fold_ind <- folds[[i]]
-   data.training <- data.train[-fold_ind, ]
-   data.validation <- data.train[fold_ind, ]
-   
-   boost.model_cv <- gbm(surv_ind ~.-sample_id, data = data.training, distribution = "multinomial", n.trees = tree_size, shrinkage = shrinkage.control, interaction.depth = interaction.dept.control)
-   
-   tree.num <- gbm.perf(boost.model_cv)
-   boost.pred_cv <- predict(boost.model_cv, newdata = data.validation, n.trees = tree.num, type = "response")
-   
-   #boost.pred <- predict(boost.model, newdata=data.test, n.trees = tree_size)
-   boost.test_cv <-apply(boost.pred_cv, 1, which.max) # select class with highest probability
-   
-   survival_index_cv <- data.validation$surv_ind
-   
-   truth.table_cv <- table(boost.test_cv, survival_index_cv) # For debugging
-   error_rate <- append(error_rate, 1-mean(survival_index_cv==boost.test_cv))
+  fold_ind <- folds[[i]]
+  data.training <- data.train[-fold_ind, ]
+  data.validation <- data.train[fold_ind, ]
+  
+  
+  adabag.boost <- boosting(surv_ind ~.-sample_id, data = data.training, boos = FALSE, control=rpart.control(maxdepth=3))
+  
+  adabag.predict <- predict.boosting(adabag.boost, newdata = data.validation)
+  #adabag.predict$confusion
+  #adabag.predict$error
+  
+  error_rate <- append(error_rate, adabag.predict$error)
 }
 
 error_rate; mean(error_rate); sd(error_rate)
 
 #########################################################################################################
 ## Building real model and testing with data.test
-## Boosting (Using built-in k-fold CV method and gbm.perf)
-
-# "Bernouli" distribution -> For 0,1 response / Use "multinomial" distribution for 1~4 response classification?
-# predict.gbm -> returns probability? to be classified into each class defined in gbm model with "multinomial" dist
-# Q. How to control the parameters? n.trees, interaction.depht, and shrinkage?
-#   -> 1. n.trees can be found out using "gbm.perf"
-boost.fit <- gbm(surv_ind ~.-sample_id, data = data.train, distribution = "multinomial", n.trees = tree_size, shrinkage = shrinkage.control, interaction.dept = interaction.dept.control, cv.folds = 5)
-tree.num <- gbm.perf(boost.fit, method = "cv")
-
-boost.pred <- predict(boost.fit, newdata = data.test, n.trees = tree.num, type = "response")
-boost.test <-apply(boost.pred, 1, which.max) # select class with highest probability
-
-survival_index <- data.test$surv_ind
-truth.table <- table(boost.test, survival_index)
-
-error_rate_final <- 1-mean(survival_index==boost.test); error_rate_final
-
-library(adabag)
-adabag.boost <- boosting(surv_ind ~.-sample_id, data = data.train, boos = FALSE, control=rpart.control(maxdepth=3))
-#adabag.boost <- boosting.cv(surv_ind ~.-sample_id, data = data.train, v = 5, control = rpart.control(cp=0.01), par = TRUE)
-
-adabag.predict <- predict.boosting(adabag.boost, newdata = data.test)
-adabag.predict$confusion
-adabag.predict$error
-
-# adabag.error_rate <- 1-mean(data.test$surv_ind==adabag.predict); adabag.error_rate
+## Boosting in 'adabag' package
+# adabag.boost <- boosting(surv_ind ~.-sample_id, data = data.train, boos = FALSE, control=rpart.control(maxdepth=3))
+# #adabag.boost <- boosting.cv(surv_ind ~.-sample_id, data = data.train, v = 5, control = rpart.control(cp=0.01), par = TRUE)
+# 
+# adabag.predict <- predict.boosting(adabag.boost, newdata = data.test)
+# adabag.predict$confusion
+# adabag.predict$error # This returns same result as two below codes
+# 
+# adabag.test <-apply(adabag.predict$prob, 1, which.max) # select class with highest probability
+# adabag.error_rate <- 1-mean(data.test$surv_ind==adabag.test); adabag.error_rate
