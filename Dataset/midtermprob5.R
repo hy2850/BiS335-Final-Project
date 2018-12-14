@@ -31,6 +31,7 @@ getSigmoidGene <- function(surv, gex, a) {
   r <- c()
   rs <-c() # save correlation coeffiecient
   ps <-c() # save p-value of correlation test
+  score <- slope <- c() # save score and slope of legit
   
     for (i in 1:nrow(gex)){
     gene_expr <- gex[i,] # i th gene expression 
@@ -45,6 +46,10 @@ getSigmoidGene <- function(surv, gex, a) {
     legit <- log(norm/(1-norm))
     
     r[i] <- cor(legit, temp2)
+    slope[i] <- (mean(legit[1:round(length(legit)/2)])-mean(legit[round(length(legit)/2):length(legit)]))/
+      (mean(temp2[1:round(length(legit)/2)])-mean(temp2[round(length(legit)/2):length(legit)]))
+    score[i] <- abs(slope[i]*r[i])
+    
     t <- r[i] * sqrt((length(legit) - 2)/(1 - r[i]^2))
     p <- min(1, 2 * pt(t, length(legit) - 2))
     if(is.na(p)){ #don`t save when p is NA
@@ -58,12 +63,14 @@ getSigmoidGene <- function(surv, gex, a) {
     }
   }
   
-  match(sort(r[r>0], decreasing = TRUE), r)
-  match(sort(r[r<0]), r)
+  # match(sort(r[r>0], decreasing = TRUE), r)
+  # match(sort(r[r<0]), r)
   
-  data <- data.frame(cor = r[order(abs(r), decreasing = TRUE)])
-  rownames(data) = exp_gene[order(abs(r), decreasing = TRUE)]
-  data <- cbind(data, number = c(1:length(r))[order(abs(r), decreasing = TRUE)])
+  data <- data.frame(cor = r[order(score, decreasing = TRUE)])
+  rownames(data) = exp_gene[order(score, decreasing = TRUE)]
+  data <- cbind(data, slope = slope[order(score, decreasing = TRUE)])
+  data <- cbind(data, number = c(1:length(r))[order(score, decreasing = TRUE)])
+  data <- cbind(data, score = score[order(score, decreasing = TRUE)])
   
   return(data)
 }

@@ -44,8 +44,8 @@ colnames(data)<- as.vector(apply(column_names, 2, FUN = make.names))
 ## Data separation (Train and Test)
 library(gbm)
 
-set.seed(1)
-train <- sample(1:nrow(data), nrow(data)*0.7)
+set.seed(4321)
+train <- sample(1:nrow(data), nrow(data)*0.9)
 data.train <- data[train,]
 data.test <- data[-train,]
 
@@ -53,37 +53,39 @@ data.test <- data[-train,]
 ## Cross-validation (K-folds)
 # load the library
 library(caret)
-library(adabag)
+library(gbm)
 
 error_rate <- c()
 
 # Control gbm parameters here
-tree_size <- 2500 # Default : 100
-shrinkage.control = 0.01 # Default : 0.1
-interaction.dept.control = 4 # Default : 1
+tree_size <- 500 # Default : 100
+shrinkage.control = 0.001 # Default : 0.1
+interaction.dept.control = 6 # Default : 1
 
-K <- 5 # Number of folds of the cross-validation
-folds <- createFolds(1:nrow(data.train), K) # Requires 'caret' package; Creates K-folds for testing (Using rest of the data for training)
-for(i in 1:K){
-   fold_ind <- folds[[i]]
-   data.training <- data.train[-fold_ind, ]
-   data.validation <- data.train[fold_ind, ]
-   
-   boost.model_cv <- gbm(surv_ind ~.-sample_id, data = data.training, distribution = "multinomial", n.trees = tree_size, shrinkage = shrinkage.control, interaction.depth = interaction.dept.control)
-   
-   tree.num <- gbm.perf(boost.model_cv)
-   boost.pred_cv <- predict(boost.model_cv, newdata = data.validation, n.trees = tree.num, type = "response")
-   
-   #boost.pred <- predict(boost.model, newdata=data.test, n.trees = tree_size)
-   boost.test_cv <-apply(boost.pred_cv, 1, which.max) # select class with highest probability
-   
-   survival_index_cv <- data.validation$surv_ind
-   
-   truth.table_cv <- table(boost.test_cv, survival_index_cv) # For debugging
-   error_rate <- append(error_rate, 1-mean(survival_index_cv==boost.test_cv))
-}
+# size 500, shrinkage 0.001, interaction 2 or 4 : 0.4903
 
-error_rate; mean(error_rate); sd(error_rate)
+# K <- 5 # Number of folds of the cross-validation
+# folds <- createFolds(1:nrow(data.train), K) # Requires 'caret' package; Creates K-folds for testing (Using rest of the data for training)
+# for(i in 1:K){
+#    fold_ind <- folds[[i]]
+#    data.training <- data.train[-fold_ind, ]
+#    data.validation <- data.train[fold_ind, ]
+#    
+#    boost.model_cv <- gbm(surv_ind ~.-sample_id, data = data.training, distribution = "multinomial", n.trees = tree_size, shrinkage = shrinkage.control, interaction.depth = interaction.dept.control, bag.fraction = 0.5, n.minobsinnode = 10)
+#    
+#    tree.num <- gbm.perf(boost.model_cv)
+#    boost.pred_cv <- predict(boost.model_cv, newdata = data.validation, n.trees = tree.num, type = "response")
+#    
+#    #boost.pred <- predict(boost.model, newdata=data.test, n.trees = tree_size)
+#    boost.test_cv <-apply(boost.pred_cv, 1, which.max) # select class with highest probability
+#    
+#    survival_index_cv <- data.validation$surv_ind
+#    
+#    truth.table_cv <- table(boost.test_cv, survival_index_cv) # For debugging
+#    error_rate <- append(error_rate, 1-mean(survival_index_cv==boost.test_cv))
+# }
+# 
+# error_rate; mean(error_rate); sd(error_rate)
 
 #########################################################################################################
 ## Building real model and testing with data.test
@@ -93,7 +95,7 @@ error_rate; mean(error_rate); sd(error_rate)
 # predict.gbm -> returns probability? to be classified into each class defined in gbm model with "multinomial" dist
 # Q. How to control the parameters? n.trees, interaction.depht, and shrinkage?
 #   -> 1. n.trees can be found out using "gbm.perf"
-boost.fit <- gbm(surv_ind ~.-sample_id, data = data.train, distribution = "multinomial", n.trees = tree_size, shrinkage = shrinkage.control, interaction.dept = interaction.dept.control, cv.folds = 5)
+boost.fit <- gbm(surv_ind ~.-sample_id, data = data.train, distribution = "multinomial", n.trees = tree_size, shrinkage = shrinkage.control, interaction.dept = interaction.dept.control, cv.folds = 5, bag.fraction = 0.8, n.minobsinnode = 20)
 tree.num <- gbm.perf(boost.fit, method = "cv")
 
 boost.pred <- predict(boost.fit, newdata = data.test, n.trees = tree.num, type = "response")
@@ -103,13 +105,16 @@ survival_index <- data.test$surv_ind
 truth.table <- table(boost.test, survival_index)
 
 error_rate_final <- 1-mean(survival_index==boost.test); error_rate_final
+importance <- summary.gbm(boost.fit, plotit=TRUE)
 
-library(adabag)
-adabag.boost <- boosting(surv_ind ~.-sample_id, data = data.train, boos = FALSE, control=rpart.control(maxdepth=3))
-#adabag.boost <- boosting.cv(surv_ind ~.-sample_id, data = data.train, v = 5, control = rpart.control(cp=0.01), par = TRUE)
 
-adabag.predict <- predict.boosting(adabag.boost, newdata = data.test)
-adabag.predict$confusion
-adabag.predict$error
-
-# adabag.error_rate <- 1-mean(data.test$surv_ind==adabag.predict); adabag.error_rate
+#########################################################################################################
+# Lowest error rate recorded : 0.3958333
+# Parameters used :
+# train <- sample(1:nrow(data), nrow(data)*0.9)
+# 
+# tree_size <- 500
+# shrinkage.control = 0.001
+# interaction.dept.control = 6
+# 
+# bag.fraction = 0.8, n.minobsinnode = 20
