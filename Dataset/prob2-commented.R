@@ -57,7 +57,7 @@ while(1==1){
 
     # 5-Fold CV    
     for (i in 1:5){
-      indices <- random[(((i-1)*round(length(random)/5))+1):(i*round(length(random)/5))]
+      indices <- random[(((i-1)*round(length(random)/5))+1):min(length(random), (i*round(length(random)/5)))]
       val <- data[indices,]
 
       ####################### Change this to apply to other models ##########################
@@ -92,7 +92,7 @@ while(1==1){
     
     # 5-Fold CV   
     for (i in 1:5){
-      indices <- random[(((i-1)*round(length(random)/5))+1):(i*round(length(random)/5))]
+      indices <- random[(((i-1)*round(length(random)/5))+1):min(length(random), (i*round(length(random)/5)))]
       val <- data[indices,]
 
       ####################### Change this to apply to other models ##########################
@@ -206,7 +206,7 @@ while(1==1){
     random <- shuffle(nrow(data))
     new_data <- data[,append(selected, j)]
     for (i in 1:5){
-      indices <- random[(((i-1)*round(length(random)/5))+1):(i*round(length(random)/5))]
+      indices <- random[(((i-1)*round(length(random)/5))+1):min(length(random), (i*round(length(random)/5)))]
       val <- data[indices,]
       svmfit <- svm(surv_ind~., data = new_data, kernel = "polynomial", subset = -indices)
       pred.val <- predict(svmfit, newdata = val)
@@ -233,7 +233,7 @@ while(1==1){
     random <- shuffle(nrow(data))
     new_data <- data[,selected[-j]]
     for (i in 1:5){
-      indices <- random[(((i-1)*round(length(random)/5))+1):(i*round(length(random)/5))]
+      indices <- random[(((i-1)*round(length(random)/5))+1):min(length(random), (i*round(length(random)/5)))]
       val <- data[indices,]
       svmfit <- svm(surv_ind~., data = new_data, kernel = "polynomial", subset = -indices)
       pred.val <- predict(svmfit, newdata = val)
