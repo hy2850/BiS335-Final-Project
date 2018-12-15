@@ -294,11 +294,9 @@ boost.pred <- predict(boost.fit, test, n.trees = tree.num, type = "response")
 boost.test <- apply(boost.pred, 1, which.max)
 
 acc.test <- mean(boost.test == test$surv_ind)
-print(1-acc.test)
-importance <- summary.gbm(boost.fit, plotit=TRUE)
-
 print(paste0("boosting error rate : ", 1-acc.test))
 error.test[3] <- 1 - acc.test
+importance <- summary.gbm(boost.fit, plotit=TRUE)
 
 # -----------------------------plot----------------------------
 
