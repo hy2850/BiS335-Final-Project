@@ -112,7 +112,7 @@ while(1==1){
     selected <- selected[-(which.max(rate2)+1)]
     temp <- append(temp, max(rate2))
   }else if (mark == 1){break} # If no feature increases model accuracy when deleted and also the mark is 1, finish the program
-  print(selected[-1])
+  print(colnames(data)[selected[-1]])
 }
 
 # estimate test error
@@ -250,7 +250,7 @@ while(1==1){
     selected <- selected[-(which.max(rate2)+1)]
     temp <- append(temp, max(rate2))
   }else if (mark == 1){break}
-  print(selected[-1])
+  print(colnames(data)[selected[-1]])
 }
 
 new_data <- data[,selected]
@@ -297,6 +297,7 @@ acc.test <- mean(boost.test == test$surv_ind)
 print(paste0("boosting error rate : ", 1-acc.test))
 error.test[3] <- 1 - acc.test
 importance <- summary.gbm(boost.fit, plotit=TRUE)
+importance[1:10,]
 
 # -----------------------------plot----------------------------
 
