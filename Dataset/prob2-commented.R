@@ -36,7 +36,7 @@ data <- cbind(data,t(gex))
 data <- cbind(data, binary)
 
 # divide test and train data
-test_indices <- shuffle(nrow(data))[1:round(nrow(data)*0.25)]
+test_indices <- shuffle(nrow(data))[1:round(nrow(data)/6)]
 test <- data[test_indices, ]
 data <- data[-test_indices, ]
 error.test <- c() # save error rate for each model
@@ -254,7 +254,7 @@ while(1==1){
 }
 
 new_data <- data[,selected]
-svmfit <- svm(surv_ind ~., data = data, kernel = "linear")
+svmfit <- svm(surv_ind ~., data = data, kernel = "polynomial")
 pred.test <- predict(svmfit, test, type = "response")
 acc.test <- mean(test$surv_ind == pred.test)
 print(paste0("SVM error rate : ", 1-acc.test))
@@ -286,7 +286,7 @@ optimal_trees<- c()
 boost.fit <- gbm(surv_ind ~., data = data, distribution = "multinomial", 
                  n.trees = tree_size, shrinkage = shrinkage.control, 
                  interaction.dept = interaction.dept.control, cv.folds = 5, 
-                 bag.fraction = 0.8, n.minobsinnode = 20)
+                 bag.fraction = 1, n.minobsinnode = 18)
 tree.num <- gbm.perf(boost.fit, method = "cv")
 # optimal_trees[i] <- which.min(boost.model_cv$valid.error)
 
