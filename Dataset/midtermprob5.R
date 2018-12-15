@@ -289,4 +289,60 @@ RL.pool <- colnames(R.gex)[R.gex[ZFP36.idx,]<ZFP36.thr]
 RR.pool <- colnames(R.gex)[R.gex[ZFP36.idx,]>ZFP36.thr]
 
 
+# 3rd Grouping (1) (for ZFP36 L group)
+# MSE before grouping = 738770.3
+
+# for gene expression data
+MSE.g.3rd.1 <- getMSEGene(RL.surv, RL.gex)
+MSE.g.3rd.1 <- MSE.g.3rd.1[order(MSE.g.3rd.1$MSE),]
+write.csv(MSE.g.3rd.1, file = "MSE_gene_3_1.csv", row.names = TRUE)
+
+plotMSEGene(RL.surv, RL.gex, MSE.g.3rd.1)
+# minMSE = 589888 (FCGR1A, 3.09775, 31) 
+
+# for mutation data
+MSE.m.3rd.1 <- getMSEMut(RL.surv, RL.pool)
+write.csv(MSE.m.3rd.1, file = "MSE_mut_3_1.csv", row.names = TRUE)
+
+plotMSEMut(RL.surv, RL.pool, MSE.m.3rd.1)
+# minMSE = 567615 (OR5W2, 1, 145)
+
+# using FCGR1A 3.09775 as a threshold
+FCGR1A.idx <- MSE.g.3rd.1[1, 1]
+FCGR1A.thr <- MSE.g.3rd.1[1, 3]
+RLL.surv <- RL.surv[RL.gex[FCGR1A.idx,]<FCGR1A.thr] # 32 obs.
+RLR.surv <- RL.surv[RL.gex[FCGR1A.idx,]>FCGR1A.thr] # 114 obs.
+RLL.gex <- RL.gex[, RL.gex[FCGR1A.idx,]<FCGR1A.thr]
+RLR.gex <- RL.gex[, RL.gex[FCGR1A.idx,]>FCGR1A.thr]
+RLL.pool <- colnames(RL.gex)[RL.gex[FCGR1A.idx,]<FCGR1A.thr]
+RLR.pool <- colnames(RL.gex)[RL.gex[FCGR1A.idx,]>FCGR1A.thr]
+
+
+# 3rd Grouping (2) (for ZFP36 R group)
+# MSE before grouping = 1662584
+
+# for gene expression data
+MSE.g.3rd.2 <- getMSEGene(RR.surv, RR.gex)
+MSE.g.3rd.2 <- MSE.g.3rd.2[order(MSE.g.3rd.2$MSE),]
+write.csv(MSE.g.3rd.2, file = "MSE_gene_3_2.csv", row.names = TRUE)
+
+plotMSEGene(RR.surv, RR.gex, MSE.g.3rd.2)
+# minMSE = 1480910 (DHRS9, -1.069125, 25) 
+
+# for mutation data
+MSE.m.3rd.2 <- getMSEMut(RR.surv, RR.pool)
+write.csv(MSE.m.3rd.2, file = "MSE_mut_3_2.csv", row.names = TRUE)
+
+plotMSEMut(RR.surv, RR.pool, MSE.m.3rd.2)
+# minMSE = 567615 (MPP7, 1, 257)
+
+# using FCGR1A 3.09775 as a threshold
+FCGR1A.idx <- MSE.g.3rd.1[1, 1]
+FCGR1A.thr <- MSE.g.3rd.1[1, 3]
+RLL.surv <- RL.surv[RL.gex[FCGR1A.idx,]<FCGR1A.thr] # 32 obs.
+RLR.surv <- RL.surv[RL.gex[FCGR1A.idx,]>FCGR1A.thr] # 114 obs.
+RLL.gex <- RL.gex[, RL.gex[FCGR1A.idx,]<FCGR1A.thr]
+RLR.gex <- RL.gex[, RL.gex[FCGR1A.idx,]>FCGR1A.thr]
+RLL.pool <- colnames(RL.gex)[RL.gex[FCGR1A.idx,]<FCGR1A.thr]
+RLR.pool <- colnames(RL.gex)[RL.gex[FCGR1A.idx,]>FCGR1A.thr]
 
