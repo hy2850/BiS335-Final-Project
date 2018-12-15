@@ -301,4 +301,7 @@ importance[1:10,]
 
 # -----------------------------plot----------------------------
 
-barplot(error.test, legend.text = c("LDA", "SVM", "Boosting"), ylab = "Error rate", col = c(1,2,3), ylim = c(0,1))
+barplot(error.test, legend.text = c(paste0("LDA - ", round(error.test[1],3)), 
+                                    paste0("SVM - ", round(error.test[2],3)),
+                                    paste0("Boosting - ", round(error.test[3],3))), ylab = "Error rate",
+        col = c(1,2,3), ylim = c(0,1))
