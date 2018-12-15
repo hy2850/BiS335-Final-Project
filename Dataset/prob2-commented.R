@@ -2,6 +2,8 @@ library(MASS)
 # install.packages("permute")
 library(permute)
 library(e1071)
+library(gbm)
+library(caret)
 
 clin <- readRDS("C:/Users/Lee/Desktop/Finalterm-Project/clinical.rds") # data load
 mut <- readRDS("C:/Users/Lee/Desktop/Finalterm-Project/mutation.rds")
@@ -37,6 +39,7 @@ data <- cbind(data, binary)
 test_indices <- shuffle(nrow(data))[1:round(nrow(data)*0.25)]
 test <- data[test_indices, ]
 data <- data[-test_indices, ]
+error.test <- c() # save error rate for each model
 
 #--------------------------lda----------------------------
 candi <- c(2:869) # predicator candidate
@@ -109,7 +112,7 @@ while(1==1){
     selected <- selected[-(which.max(rate2)+1)]
     temp <- append(temp, max(rate2))
   }else if (mark == 1){break} # If no feature increases model accuracy when deleted and also the mark is 1, finish the program
-  print(selected)
+  print(selected[-1])
 }
 
 # estimate test error
@@ -117,7 +120,8 @@ new_data <- data[,selected]
 lda.fit <- lda(surv_ind ~., data = data)
 pred.test <- predict(lda.fit, test, type = "response")
 acc.test <- mean(test$surv_ind == pred.test$class)
-print(1-acc.test)
+print(paste0("LDA error rate : ", 1-acc.test))
+error.test[1] <- 1-acc.test
 
 #------------------qda---------------------
 
@@ -204,7 +208,7 @@ while(1==1){
     for (i in 1:5){
       indices <- random[(((i-1)*round(length(random)/5))+1):(i*round(length(random)/5))]
       val <- data[indices,]
-      svmfit <- svm(surv_ind~., data = new_data, kernel = "linear", subset = -indices)
+      svmfit <- svm(surv_ind~., data = new_data, kernel = "polynomial", subset = -indices)
       pred.val <- predict(svmfit, newdata = val)
       acc.val[i] <- mean(val$surv_ind == pred.val)
       # tune <- tune(svm, surv_ind~., data = new_data[-indices, ], kernel = "linear", ranges = list(cost = c(0.01, 0.1, 1, 10), gamma = c(0.5, 1, 2, 4))) 
@@ -246,11 +250,56 @@ while(1==1){
     selected <- selected[-(which.max(rate2)+1)]
     temp <- append(temp, max(rate2))
   }else if (mark == 1){break}
-  print(selected)
+  print(selected[-1])
 }
 
 new_data <- data[,selected]
 svmfit <- svm(surv_ind ~., data = data, kernel = "linear")
 pred.test <- predict(svmfit, test, type = "response")
 acc.test <- mean(test$surv_ind == pred.test)
+print(paste0("SVM error rate : ", 1-acc.test))
+error.test[2] <- 1-acc.test
+
+#------------------boosting---------------------
+
+# data <- data.frame(surv_ind = surv_ind[match(common_id, clin$sample_id)])
+# rownames(data) <- common_id
+# data <- cbind(data,t(gex))
+# data <- cbind(data, binary)
+
+# k <- prcomp(data[,-1], center = T, scale = T)
+# data <- data.frame(surv_ind = surv_ind[match(common_id, clin$sample_id)])
+# rownames(data) <- common_id
+# data <- cbind(data,k$x)
+# data <- rbind(data, data[data$surv_ind==2, ])
+
+# selected <- c(1:869)
+
+# Control gbm parameters here
+tree_size <- 2800 # Default : 100
+shrinkage.control = 0.001 # Default : 0.1
+interaction.dept.control = c(6) # Default : 1
+
+acc.test <- c()
+optimal_trees<- c()
+
+boost.fit <- gbm(surv_ind ~., data = data, distribution = "multinomial", 
+                 n.trees = tree_size, shrinkage = shrinkage.control, 
+                 interaction.dept = interaction.dept.control, cv.folds = 5, 
+                 bag.fraction = 0.8, n.minobsinnode = 20)
+tree.num <- gbm.perf(boost.fit, method = "cv")
+# optimal_trees[i] <- which.min(boost.model_cv$valid.error)
+
+boost.pred <- predict(boost.fit, test, n.trees = tree.num, type = "response")
+boost.test <- apply(boost.pred, 1, which.max)
+
+acc.test <- mean(boost.test == test$surv_ind)
 print(1-acc.test)
+importance <- summary.gbm(boost.fit, plotit=TRUE)
+
+print(paste0("boosting error rate : ", 1-acc.test))
+error.test[3] <- 1 - acc.test
+
+# -----------------------------plot----------------------------
+
+barplot(error.test, legend.text = c("LDA", "SVM", "Boosting"), ylab = "Error rate", col = c(1,2,3), ylim = c(0,1))
