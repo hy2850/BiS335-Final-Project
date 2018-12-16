@@ -1,9 +1,15 @@
+library(survival)
+library(survminer)
+
 clin <- readRDS("C:/Users/YuKyeong/Desktop/Lecture/BiS335/final_PJ/Finalterm-Project/clinical.rds")
 gex <- readRDS("C:/Users/YuKyeong/Desktop/Lecture/BiS335/final_PJ/Finalterm-Project/expression.rds")
 mut <- readRDS("C:/Users/YuKyeong/Desktop/Lecture/BiS335/final_PJ/Finalterm-Project/mutation.rds")
 genes <- read.csv("C:/Users/YuKyeong/Desktop/Lecture/BiS335/final_PJ/Finalterm-Project/gex_anova_result.csv")
 mutat <- read.csv("C:/Users/YuKyeong/Desktop/Lecture/BiS335/final_PJ/Finalterm-Project/mut_chisq_result.csv")
 surv_ind <- clin$survival_index
+surv_t <- clin$survival_time
+vital <- clin$vital_status
+vital <- as.numeric(vital)
 genes <- genes[order(genes[,2]),]
 mutat <- mutat[order(mutat[,2]),]
 
@@ -18,7 +24,6 @@ km.out <- kmeans(pca_gex$x, 4, nstart = 20)
 
 # visualization silhouetter and etc. measure for optimal number of clusters
 fviz_nbclust(pca_gex$x, kmeans, method = "silhouette") 
-fviz_nbclust(pca_gex$x, kmeans, method = "wss")
 # ---------- Hierarchial Clustering ----------
 
 library(factoextra) 
@@ -29,7 +34,10 @@ fviz_nbclust(pca_gex$x, hcut, method = "silhouette")
 
 library("fpc")
 
-hc.complete = hclust(dist(data[, -1]), method="complete")
+data <- data.frame(surv_ind = surv_ind[match(common_id, clin$sample_id)])
+data <- cbind(data, pca_gex$x)
+
+hc.complete = hclust(dist(data[,-1]), method="complete")
 plot(hc.complete, main="Complete Linkage", xlab="", sub="", cex=.9)
 hc.cluster = cutree(hc.complete, 3)
 
@@ -42,6 +50,9 @@ library(clues)
 adjustedRand(hc.cluster,as.numeric(data$surv_ind))
 # Rand : 0.52058977
 
+su <- Surv(surv_t[match(common_id, clin$sample_id)], vital[match(common_id, clin$sample_id)]) # test for stage
+s_diff <- survdiff(su ~ hc.cluster)
+s_diff
 
 # ---------- K means ----------
 
@@ -54,3 +65,6 @@ table(km.out$cluster, as.numeric(data$surv_ind))
 
 adjustedRand(km.out$cluster, as.numeric(data$surv_ind))
 # Rand : 0.51083855
+
+s_diff <- survdiff(su ~ km.out$cluster)
+s_diff

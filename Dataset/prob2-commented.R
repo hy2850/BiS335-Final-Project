@@ -254,7 +254,7 @@ while(1==1){
 }
 
 new_data <- data[,selected]
-svmfit <- svm(surv_ind ~., data = data, kernel = "linear")
+svmfit <- svm(surv_ind ~., data = data, kernel = "polynomial")
 pred.test <- predict(svmfit, test, type = "response")
 acc.test <- mean(test$surv_ind == pred.test)
 print(paste0("SVM error rate : ", 1-acc.test))
