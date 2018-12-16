@@ -63,7 +63,7 @@ tree_size <- seq(100,1000,25)
 
 for (size in tree_size){
   error_rate <- c()
-  for(i in 1:K){6
+  for(i in 1:K){
     test.ind <- folds[[i]]
     train.ind <- setdiff(obs_num, test.ind)
     

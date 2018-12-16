@@ -5,11 +5,11 @@ library(e1071)
 library(gbm)
 library(caret)
 
-clin <- readRDS("C:/Users/Lee/Desktop/Finalterm-Project/clinical.rds") # data load
-mut <- readRDS("C:/Users/Lee/Desktop/Finalterm-Project/mutation.rds")
-gex <- readRDS("C:/Users/Lee/Desktop/Finalterm-Project/expression.rds")
-genes <- read.csv("C:/Users/Lee/Desktop/Finalterm-Project/gex_anova_result.csv")
-mutat <- read.csv("C:/Users/Lee/Desktop/Finalterm-Project/mut_chisq_result.csv")
+# clin <- readRDS("C:/Users/Lee/Desktop/Finalterm-Project/clinical.rds") # data load
+# mut <- readRDS("C:/Users/Lee/Desktop/Finalterm-Project/mutation.rds")
+# gex <- readRDS("C:/Users/Lee/Desktop/Finalterm-Project/expression.rds")
+# genes <- read.csv("C:/Users/Lee/Desktop/Finalterm-Project/gex_anova_result.csv")
+# mutat <- read.csv("C:/Users/Lee/Desktop/Finalterm-Project/mut_chisq_result.csv")
 surv_ind <- clin$survival_index
 genes <- genes[order(genes[,2]),]
 mutat <- mutat[order(mutat[,2]),]
@@ -36,7 +36,7 @@ data <- cbind(data,t(gex))
 data <- cbind(data, binary)
 
 # divide test and train data
-test_indices <- shuffle(nrow(data))[1:round(nrow(data)*0.25)]
+test_indices <- shuffle(nrow(data))[1:round(nrow(data)*0.15)]
 test <- data[test_indices, ]
 data <- data[-test_indices, ]
 error.test <- c() # save error rate for each model
@@ -276,9 +276,9 @@ error.test[2] <- 1-acc.test
 # selected <- c(1:869)
 
 # Control gbm parameters here
-tree_size <- 2800 # Default : 100
+tree_size <- 2500 # Default : 100
 shrinkage.control = 0.001 # Default : 0.1
-interaction.dept.control = c(6) # Default : 1
+interaction.dept.control = 6 # Default : 1
 
 acc.test <- c()
 optimal_trees<- c()
@@ -286,7 +286,7 @@ optimal_trees<- c()
 boost.fit <- gbm(surv_ind ~., data = data, distribution = "multinomial", 
                  n.trees = tree_size, shrinkage = shrinkage.control, 
                  interaction.dept = interaction.dept.control, cv.folds = 5, 
-                 bag.fraction = 0.8, n.minobsinnode = 20)
+                 bag.fraction = 1, n.minobsinnode = 18)
 tree.num <- gbm.perf(boost.fit, method = "cv")
 # optimal_trees[i] <- which.min(boost.model_cv$valid.error)
 

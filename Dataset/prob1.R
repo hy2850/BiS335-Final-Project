@@ -1,5 +1,5 @@
 rm(list = ls()) # Clear all workspace
-setwd("C:/Users/박현철/Desktop/BiS335 바이오통계/Final Project/Dataset")
+
 
 ## Environment settings
 # setwd to directory containing below rds files!

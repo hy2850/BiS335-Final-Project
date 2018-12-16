@@ -1,6 +1,6 @@
 ### Tree Boosting
 rm(list = ls()) # Clear all workspace
-setwd("C:/Users/hy285/Desktop/BiS335-Final-Project/Dataset")
+setwd("C:/BiS335 Final Project/Dataset")
 
 ## Environment settings
 # setwd to directory containing below rds files!
@@ -44,7 +44,7 @@ colnames(data)<- as.vector(apply(column_names, 2, FUN = make.names))
 ## Data separation (Train and Test)
 library(gbm)
 
-set.seed(4321)
+set.seed(100)
 train <- sample(1:nrow(data), nrow(data)*0.9)
 data.train <- data[train,]
 data.test <- data[-train,]
@@ -95,7 +95,7 @@ interaction.dept.control = 6 # Default : 1
 # predict.gbm -> returns probability? to be classified into each class defined in gbm model with "multinomial" dist
 # Q. How to control the parameters? n.trees, interaction.depht, and shrinkage?
 #   -> 1. n.trees can be found out using "gbm.perf"
-boost.fit <- gbm(surv_ind ~.-sample_id, data = data.train, distribution = "multinomial", n.trees = tree_size, shrinkage = shrinkage.control, interaction.dept = interaction.dept.control, cv.folds = 5, bag.fraction = 0.8, n.minobsinnode = 20)
+boost.fit <- gbm(surv_ind ~.-sample_id, data = data.train, distribution = "multinomial", n.trees = tree_size, shrinkage = shrinkage.control, interaction.dept = interaction.dept.control, cv.folds = 5, bag.fraction = 1, n.minobsinnode = 18)
 tree.num <- gbm.perf(boost.fit, method = "cv")
 
 boost.pred <- predict(boost.fit, newdata = data.test, n.trees = tree.num, type = "response")
@@ -106,10 +106,10 @@ truth.table <- table(boost.test, survival_index)
 
 error_rate_final <- 1-mean(survival_index==boost.test); error_rate_final
 importance <- summary.gbm(boost.fit, plotit=TRUE)
-
+# importance[importance[,"rel.inf"] >= 1, ]
 
 #########################################################################################################
-# Lowest error rate recorded : 0.3958333
+# Lowest error rate recorded : 0.3541667
 # Parameters used :
 # train <- sample(1:nrow(data), nrow(data)*0.9)
 # 
@@ -117,4 +117,12 @@ importance <- summary.gbm(boost.fit, plotit=TRUE)
 # shrinkage.control = 0.001
 # interaction.dept.control = 6
 # 
-# bag.fraction = 0.8, n.minobsinnode = 20
+# bag.fraction = 1, n.minobsinnode = 18 (or 19)
+
+# Seed
+# 4321 : 0.3541667
+# 1111 : 0.5208333
+# 1 : 0.458333
+# 2 : 0.5208333
+# 3 : 0.5208333
+# 100 : 0.6458333
